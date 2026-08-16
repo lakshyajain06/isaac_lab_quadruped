@@ -9,7 +9,7 @@ from isaaclab.scene import InteractiveSceneCfg
 from isaaclab.terrains import TerrainImporterCfg
 from isaaclab.sensors import ContactSensorCfg
 
-from isaaclab.envs.mdp.actions.action_cfg import JointPositionActionCfg
+from isaaclab.envs.mdp.actions.actions_cfg import JointPositionActionCfg
 from isaaclab.envs.mdp.commands.commands_cfg import UniformVelocityCommandCfg
 
 from isaaclab.managers import ObservationGroupCfg as ObsGroup
@@ -20,6 +20,7 @@ from isaaclab.managers import TerminationTermCfg as DoneTerm
 from isaaclab.managers import EventTermCfg as EventTerm
 
 from . import mdp
+
 
 ##
 # Pre-defined configs
@@ -41,7 +42,7 @@ class PupperWalkSceneCfg(InteractiveSceneCfg):
         prim_path="/World/ground",
         terrain_type="plane",
         collision_group=-1,
-        physics_material=sim_utils.RigitBodyMaterialCfg(
+        physics_material=sim_utils.RigidBodyMaterialCfg(
             static_friction=1.0,
             dynamic_friction=1.0,
         ),
@@ -52,14 +53,14 @@ class PupperWalkSceneCfg(InteractiveSceneCfg):
 
     # lights
     contact_forces = ContactSensorCfg(
-        prim_path="{ENV_REGEX_NS}/Robot/.*_3",
+        prim_path="{ENV_REGEX_NS}/Robot/base_link/.*_3",
         update_period=0.0,
         history_length=3,
         track_air_time=True,
     )
 
     base_contact_forces = ContactSensorCfg(
-        prim_path="{ENV_REGEX_NS}/Robot/base_link",
+        prim_path="{ENV_REGEX_NS}/Robot/base_link/base_link",
         update_period=0.0,
         history_length=1,
         track_air_time=True,
@@ -106,7 +107,7 @@ class ActionsCfg:
     """Action specifications for the MDP."""
     joint_positions = JointPositionActionCfg(
         asset_name="robot",
-        joint_name=[".*"],
+        joint_names=[".*"],
         scale=0.5,
     )
 
@@ -180,7 +181,7 @@ class RewardsCfg:
         func=mdp.feet_air_time,
         weight=0.1,
         params={
-            "sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*_calf"),
+            "sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*_3"),
             "command_name": "base_velocity",
             "threshold": 0.3,
         },
@@ -191,7 +192,7 @@ class TerminationsCfg:
     time_out = DoneTerm(func=mdp.time_out, time_out=True)
     base_contact = DoneTerm(
         func=mdp.illegal_contact,
-        params={"sensor_cfg": SceneEntityCfg("contact_forces", body_names=".*base_link"), "threshold": 1.0},
+        params={"sensor_cfg": SceneEntityCfg("base_contact_forces", body_names="base_link"), "threshold": 1.0},
     )
 
 ##
@@ -199,14 +200,14 @@ class TerminationsCfg:
 ##
 
 @configclass
-class IsaacLabQuadrupedEnvCfg(ManagerBasedRLEnvCfg):
+class PupperWalkEnvCfg(ManagerBasedRLEnvCfg):
     # Scene settings
     scene: PupperWalkSceneCfg = PupperWalkSceneCfg(num_envs=4096, env_spacing=2.5)
 
     # Basic settings
     observations: ObservationsCfg = ObservationsCfg()
     actions: ActionsCfg = ActionsCfg()
-    commads: CommandsCfg = CommandsCfg()
+    commands: CommandsCfg = CommandsCfg()
 
     # Randomization Settings
     events: EventCfg = EventCfg()
