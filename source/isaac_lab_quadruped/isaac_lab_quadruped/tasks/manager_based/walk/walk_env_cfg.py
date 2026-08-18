@@ -51,21 +51,12 @@ class PupperWalkSceneCfg(InteractiveSceneCfg):
     # robot
     robot = PUPPER_CFG.replace(prim_path="{ENV_REGEX_NS}/Robot")
 
-    # lights
     contact_forces = ContactSensorCfg(
         prim_path="{ENV_REGEX_NS}/Robot/base_link/.*_3",
         update_period=0.0,
         history_length=3,
         track_air_time=True,
     )
-
-    base_contact_forces = ContactSensorCfg(
-        prim_path="{ENV_REGEX_NS}/Robot/base_link/base_link",
-        update_period=0.0,
-        history_length=1,
-        track_air_time=True,
-    )
-
 
 ##
 # MDP settings
@@ -193,6 +184,18 @@ class TerminationsCfg:
     base_contact = DoneTerm(
         func=mdp.illegal_contact,
         params={"sensor_cfg": SceneEntityCfg("base_contact_forces", body_names="base_link"), "threshold": 1.0},
+    )
+
+    # terminate if base height is too low
+    base_height = DoneTerm(
+        func=mdp.root_height_below_minimum,
+        params={"minimum_height": 0.1},
+    )
+
+    # terminate if robot tipps over too much
+    base_angle = DoneTerm(
+        func=mdp.bad_orientation,
+        params={"limit_angle": 0.52}
     )
 
 ##
